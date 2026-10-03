@@ -29,9 +29,17 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
     "corsheaders",
-    # Local
+       # Local
     "apps.core",
     "apps.accounts",
+    "apps.menu",
+    "apps.tables",
+    "apps.reservations",
+    "apps.queue_mgmt",
+    "apps.orders",
+    "apps.payments",
+    "apps.invoices",
+    "apps.notifications",
 ]
 
 MIDDLEWARE = [
