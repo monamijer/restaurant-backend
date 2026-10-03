@@ -68,8 +68,17 @@ class RestaurantSettings(TimestampedModel):
             raise ValidationError({"timezone": "Unknown timezone."})
 
     def save(self, *args, **kwargs):
-        self.pk = SINGLETON_PK  # Whatever the caller does, there is only one row.
-        super().save(*args, **kwargs)
+       self.pk = SINGLETON_PK  # Whatever the caller does, there is only one row.
+       if self._state.adding:
+           # An unsaved instance may overwrite the existing row: keep its creation date.
+           existing_created_at = (
+               type(self).objects.filter(pk=SINGLETON_PK)
+               .values_list("created_at", flat=True)
+               .first()
+           )
+           if existing_created_at is not None:
+             self.created_at = existing_created_at
+       super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         raise ProtectedError("Restaurant settings cannot be deleted.", {self})
