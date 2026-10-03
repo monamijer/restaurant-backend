@@ -65,11 +65,15 @@ class TestRestaurantSettings:
 
     def test_every_save_targets_the_singleton_row(self):
         RestaurantSettings(name="First").save()
+        original_created_at = RestaurantSettings.load().created_at
+
         RestaurantSettings(name="Second").save()
 
         assert RestaurantSettings.objects.count() == 1
-        assert RestaurantSettings.load().name == "Second"
-
+        settings = RestaurantSettings.load()
+        assert settings.name == "Second"
+        assert settings.created_at == original_created_at
+        
     def test_cannot_be_deleted(self):
         with pytest.raises(ProtectedError):
             RestaurantSettings.load().delete()
