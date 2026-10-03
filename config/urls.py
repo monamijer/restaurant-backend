@@ -1,25 +1,29 @@
-"""
-URL configuration for config project.
+"""Root URL configuration. One router exposes every resource under /api/."""
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-"""Root URL configuration. Each app owns its routes under /api/."""
-
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from rest_framework.routers import SimpleRouter
+
+from apps.core.views import RestaurantSettingsView
+from apps.menu.views import CategoryViewSet, MenuItemViewSet
+from apps.notifications.views import NotificationViewSet
+from apps.tables.views import TableViewSet
+
+router = SimpleRouter()
+router.register("categories", CategoryViewSet, basename="category")
+router.register("menu-items", MenuItemViewSet, basename="menu-item")
+router.register("tables", TableViewSet, basename="table")
+router.register("notifications", NotificationViewSet, basename="notification")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("apps.accounts.urls")),
+    path("api/settings/", RestaurantSettingsView.as_view(), name="restaurant-settings"),
+    path("api/", include(router.urls)),
 ]
+
+if settings.DEBUG:
+    # Uploaded images are served by Django only in development.
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
