@@ -19,6 +19,7 @@ class RestaurantSettingsSerializer(serializers.ModelSerializer):
             "pending_reservation_expiry_minutes",
             "tax_rate",
             "updated_at",
+            "queue_minutes_per_party",
         )
         read_only_fields = ("updated_at",)
         extra_kwargs = {
@@ -27,6 +28,7 @@ class RestaurantSettingsSerializer(serializers.ModelSerializer):
             "max_reservation_minutes": {"min_value": 1},
             "pending_reservation_expiry_minutes": {"min_value": 1},
             "tax_rate": {"min_value": 0, "max_value": 100},
+            "queue_minutes_per_party": {"min_value": 1},            
         }
 
     def validate_timezone(self, value):

@@ -30,6 +30,7 @@ class RestaurantSettings(TimestampedModel):
     max_reservation_minutes = models.PositiveSmallIntegerField(default=180)
     pending_reservation_expiry_minutes = models.PositiveSmallIntegerField(default=30)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
+    queue_minutes_per_party = models.PositiveSmallIntegerField(default=10)
 
     class Meta:
         verbose_name_plural = "restaurant settings"
@@ -50,6 +51,11 @@ class RestaurantSettings(TimestampedModel):
                 condition=Q(tax_rate__gte=0) & Q(tax_rate__lte=100),
                 name="settings_tax_rate_percentage",
             ),
+            models.CheckConstraint(
+                condition=Q(queue_minutes_per_party__gt=0),
+                name="settings_queue_minutes_positive",
+            ),            
+            
         ]
 
     @classmethod
