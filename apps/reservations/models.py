@@ -12,10 +12,11 @@ class ReservationStatus(models.TextChoices):
     CANCELLED = "cancelled", "Cancelled"
     COMPLETED = "completed", "Completed"
     NO_SHOW = "no_show", "No show"
+    EXPIRED = "expired", "Expired"
 
 
-# Statuses that hold a table slot. Overlap checks only look at these.
-ACTIVE_RESERVATION_STATUSES = (ReservationStatus.PENDING, ReservationStatus.CONFIRMED)
+# # Statuses that hold a table slot. Overlap checks only look at these.
+# ACTIVE_RESERVATION_STATUSES = (ReservationStatus.PENDING, ReservationStatus.CONFIRMED)
 
 
 class Reservation(TimestampedModel):
