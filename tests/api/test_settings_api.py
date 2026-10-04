@@ -59,3 +59,11 @@ def test_put_is_not_allowed(as_user, admin_user):
 
     assert response.status_code == 405
     assert response.data["code"] == "METHOD_NOT_ALLOWED"
+
+def test_queue_minutes_per_party_must_be_positive(as_user, admin_user):
+    response = as_user(admin_user).patch(
+        SETTINGS_URL, {"queue_minutes_per_party": 0}, format="json"
+    )
+
+    assert response.status_code == 400
+    assert "queue_minutes_per_party" in response.data["errors"]
