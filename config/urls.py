@@ -10,12 +10,14 @@ from apps.core.views import RestaurantSettingsView
 from apps.menu.views import CategoryViewSet, MenuItemViewSet
 from apps.notifications.views import NotificationViewSet
 from apps.tables.views import TableViewSet
+from apps.reservations.views import ReservationViewSet
 
 router = SimpleRouter()
 router.register("categories", CategoryViewSet, basename="category")
 router.register("menu-items", MenuItemViewSet, basename="menu-item")
 router.register("tables", TableViewSet, basename="table")
 router.register("notifications", NotificationViewSet, basename="notification")
+router.register("reservations", ReservationViewSet, basename="reservation")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
