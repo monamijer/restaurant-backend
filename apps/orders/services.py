@@ -28,8 +28,9 @@ from apps.tables import services as table_services
 from apps.tables.models import Table, TableStatus
 
 from .models import Order, OrderItem, OrderStatus, OrderType
+from apps.core.fields import CURRENCY_CODE
+from apps.payments import services as payment_services
 
-CURRENCY_CODE = "USD"
 CENT = Decimal("0.01")
 ONE_HUNDRED = Decimal("100")
 
@@ -177,6 +178,15 @@ def _table_has_no_open_order(table_id):
     )
     return not list(open_orders)
 
+def _check_money(order, new_status):
+    """Only a fully paid order is completed; a paid order cannot simply be cancelled."""
+    paid = payment_services.paid_total(order.pk)
+    if new_status == OrderStatus.COMPLETED and paid < order.total:
+        raise ConflictError("The order is not fully paid.")
+    if new_status == OrderStatus.CANCELLED:
+        if paid > 0:
+            raise ConflictError("A paid order cannot be cancelled: refund it first.")
+        payment_services.fail_pending_payments(order.pk)
 
 def _notify_customer(order, new_status, actor):
     owner_cancelled = actor is not None and order.customer_id == actor.pk
@@ -211,6 +221,7 @@ def _move(order_id, new_status, *, actor=None):
             raise ConflictError(
                 f"An order that is '{order.status!s}' cannot become '{new_status!s}'."
             )
+        _check_money(order, new_status)        
         order.status = new_status
         order.save(update_fields=["status", "updated_at"])
 
