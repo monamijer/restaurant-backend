@@ -14,6 +14,9 @@ from apps.reservations.views import ReservationViewSet
 from apps.queue_mgmt.views import QueueViewSet
 from apps.orders.views import OrderViewSet
 
+from apps.invoices.views import InvoiceViewSet
+from apps.payments.views import PaymentViewSet
+
 router = SimpleRouter()
 router.register("categories", CategoryViewSet, basename="category")
 router.register("menu-items", MenuItemViewSet, basename="menu-item")
@@ -22,6 +25,8 @@ router.register("notifications", NotificationViewSet, basename="notification")
 router.register("reservations", ReservationViewSet, basename="reservation")
 router.register("queue", QueueViewSet, basename="queue")
 router.register("orders", OrderViewSet, basename="order")
+router.register("payments", PaymentViewSet, basename="payment")
+router.register("invoices", InvoiceViewSet, basename="invoice")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
