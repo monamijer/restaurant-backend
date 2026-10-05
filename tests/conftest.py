@@ -1,8 +1,13 @@
+from decimal import Decimal
+
 import pytest
 from django.core.cache import cache
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.accounts.models import Role, User
+from apps.orders.models import Order, OrderStatus, OrderType
+from apps.payments.models import Payment, PaymentMethod, PaymentStatus
 
 STRONG_PASSWORD = "S3cure-Passw0rd!"
 FAST_TEST_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
@@ -10,10 +15,12 @@ FAST_TEST_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 @pytest.fixture(autouse=True)
 def isolated_environment(settings, tmp_path):
-    """Each test gets empty throttle counters, a private media folder and a fast hasher."""
+    """Each test gets empty throttle counters, private folders and a fast hasher."""
     settings.SECURE_SSL_REDIRECT = False
     settings.PASSWORD_HASHERS = FAST_TEST_HASHERS  # PBKDF2 is deliberately slow
     settings.MEDIA_ROOT = tmp_path / "media"
+    settings.PRIVATE_MEDIA_ROOT = tmp_path / "private"
+    settings.ALLOW_SIMULATED_PAYMENTS = True
     cache.clear()
     yield
     cache.clear()
@@ -64,3 +71,40 @@ def as_user(api_client):
         return api_client
 
     return authenticate
+
+
+@pytest.fixture
+def make_order():
+    """Insert an order directly (to arrange state), bypassing the pricing service.
+
+    `paid=True` also records a PAID cash payment covering the total."""
+
+    def factory(
+        customer=None,
+        *,
+        order_type=OrderType.TAKEAWAY,
+        status=OrderStatus.PENDING,
+        table=None,
+        total=Decimal("10.00"),
+        paid=False,
+    ):
+        order = Order.objects.create(
+            customer=customer,
+            table=table,
+            order_type=order_type,
+            status=status,
+            subtotal=total,
+            tax_amount=Decimal("0.00"),
+            total=total,
+        )
+        if paid:
+            Payment.objects.create(
+                order=order,
+                method=PaymentMethod.CASH,
+                amount=total,
+                status=PaymentStatus.PAID,
+                paid_at=timezone.now(),
+            )
+        return order
+
+    return factory

@@ -44,7 +44,7 @@ def test_simultaneous_completions_still_send_the_table_to_cleaning(make_order, t
     table.status = TableStatus.OCCUPIED
     table.save()
     orders = [
-        make_order(order_type=OrderType.DINE_IN, status=OrderStatus.READY, table=table)
+        make_order(order_type=OrderType.DINE_IN, status=OrderStatus.READY, table=table, paid=True)
         for _ in range(ORDERS)
     ]
 

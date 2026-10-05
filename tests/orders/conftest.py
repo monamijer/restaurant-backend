@@ -3,7 +3,6 @@ from decimal import Decimal
 import pytest
 
 from apps.menu.models import Category, MenuItem
-from apps.orders.models import Order, OrderStatus, OrderType
 from apps.tables.models import Table
 
 
@@ -38,28 +37,3 @@ def order_payload(dish):
         return payload
 
     return build
-
-
-@pytest.fixture
-def make_order():
-    """Insert an order directly (for arranging state), bypassing the pricing service."""
-
-    def factory(
-        customer=None,
-        *,
-        order_type=OrderType.TAKEAWAY,
-        status=OrderStatus.PENDING,
-        table=None,
-        total=Decimal("10.00"),
-    ):
-        return Order.objects.create(
-            customer=customer,
-            table=table,
-            order_type=order_type,
-            status=status,
-            subtotal=total,
-            tax_amount=Decimal("0.00"),
-            total=total,
-        )
-
-    return factory

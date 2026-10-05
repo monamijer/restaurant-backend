@@ -17,7 +17,7 @@ class TestStatusMachine:
     def test_staff_walk_an_order_through_its_lifecycle(
         self, as_user, staff_user, customer, make_order
     ):
-        order = make_order(customer)
+        order = make_order(customer, paid=True)
         client = as_user(staff_user)
 
         for new_status in ["confirmed", "preparing", "ready", "completed"]:
@@ -118,8 +118,8 @@ class TestTableSynchronisation:
     ):
         table.status = TableStatus.OCCUPIED
         table.save()
-        first = make_order(order_type=OrderType.DINE_IN, status=OrderStatus.READY, table=table)
-        second = make_order(order_type=OrderType.DINE_IN, status=OrderStatus.READY, table=table)
+        first = make_order(order_type=OrderType.DINE_IN, status=OrderStatus.READY, table=table, paid=True)
+        second = make_order(order_type=OrderType.DINE_IN, status=OrderStatus.READY, table=table, paid=True)
         client = as_user(staff_user)
 
         set_status(client, first, "completed")
