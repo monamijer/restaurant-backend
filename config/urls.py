@@ -12,6 +12,7 @@ from apps.notifications.views import NotificationViewSet
 from apps.tables.views import TableViewSet
 from apps.reservations.views import ReservationViewSet
 from apps.queue_mgmt.views import QueueViewSet
+from apps.orders.views import OrderViewSet
 
 router = SimpleRouter()
 router.register("categories", CategoryViewSet, basename="category")
@@ -20,6 +21,7 @@ router.register("tables", TableViewSet, basename="table")
 router.register("notifications", NotificationViewSet, basename="notification")
 router.register("reservations", ReservationViewSet, basename="reservation")
 router.register("queue", QueueViewSet, basename="queue")
+router.register("orders", OrderViewSet, basename="order")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
