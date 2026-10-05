@@ -1,6 +1,7 @@
 from django.db import models
 
 from apps.core.fields import money_field
+from .storage import PrivateStorage
 
 
 class InvoiceSequence(models.Model):
@@ -16,7 +17,7 @@ class InvoiceSequence(models.Model):
 class Invoice(models.Model):
     order = models.OneToOneField("orders.Order", on_delete=models.PROTECT, related_name="invoice")
     invoice_number = models.CharField(max_length=20, unique=True)
-    pdf_file = models.FileField(upload_to="invoices/%Y/", blank=True)
+    pdf_file = models.FileField(upload_to="invoices/%Y/", storage=PrivateStorage(), blank=True)
     issued_at = models.DateTimeField(auto_now_add=True)
     total = money_field()
 
