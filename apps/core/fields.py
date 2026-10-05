@@ -1,5 +1,6 @@
 from django.db import models
 
+CURRENCY_CODE = "USD"
 MONEY_MAX_DIGITS = 10
 MONEY_DECIMAL_PLACES = 2
 

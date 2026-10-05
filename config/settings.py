@@ -113,6 +113,13 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# --- Payments & invoices -------------------------------------------------
+PRIVATE_MEDIA_ROOT = BASE_DIR / "private_media"  # Never exposed by any URL
+PAYMENT_GATEWAY = env("PAYMENT_GATEWAY", default="apps.payments.gateways.SimulatedGateway")
+# The simulated gateway approves almost any token, so outside development it must be
+# switched on deliberately.
+ALLOW_SIMULATED_PAYMENTS = env.bool("ALLOW_SIMULATED_PAYMENTS", default=DEBUG)
+
 # --- CORS (the frontend runs as a separate app on its own origin) --------
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:5173"])
 
@@ -141,6 +148,7 @@ REST_FRAMEWORK = {
         "anon": "100/min",
         "user": "300/min",
         "auth": "10/min",  # register + login: brute-force protection
+        "payments": "20/min",  # card-testing protection on payment creation        
     },
     "EXCEPTION_HANDLER": "apps.core.exceptions.api_exception_handler",
 }
