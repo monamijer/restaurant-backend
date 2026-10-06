@@ -22,6 +22,7 @@ from apps.orders.models import Order, OrderStatus, OrderType
 from apps.payments import services as payment_services
 from apps.payments.gateways import ChargeResult
 from apps.payments.models import PaymentMethod
+from apps.payments.models import Payment
 from apps.queue_mgmt import services as queue_services
 from apps.queue_mgmt.models import QueueTicket
 from apps.reservations import services as reservation_services
@@ -79,6 +80,7 @@ def wipe():
         Category.objects.all().delete()
         Table.objects.all().delete()
         InvoiceSequence.objects.all().delete()
+        Payment.objects.all().delete()        
         demo_accounts().delete()
 
 
