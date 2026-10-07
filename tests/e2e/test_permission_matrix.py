@@ -49,6 +49,18 @@ MATRIX = [
     ("get", "/api/notifications/", SIGNED_IN),
     ("get", "/api/notifications/unread-count/", SIGNED_IN),
     ("get", "/api/auth/me/", SIGNED_IN),
+        ("get", "/api/users/", STAFF),
+    ("post", "/api/users/", ADMIN),
+    ("patch", f"/api/users/{MISSING}/", ADMIN),
+    ("post", f"/api/users/{MISSING}/set-password/", ADMIN),
+    ("post", "/api/auth/change-password/", SIGNED_IN),
+    ("get", "/api/dashboard/stats/", STAFF),
+    ("get", "/api/reports/revenue/", ADMIN),
+    ("get", "/api/reports/order-volume/", ADMIN),
+    ("get", "/api/reports/top-items/", ADMIN),
+    ("get", "/api/reports/peak-hours/", ADMIN),
+    ("get", "/api/reports/table-utilization/", ADMIN),
+    ("get", "/api/reports/payments/", ADMIN),
 ]
 
 
