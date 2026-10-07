@@ -6,7 +6,7 @@ from apps.accounts.permissions import IsAdminRole, IsStaffRole
 from apps.core.models import RestaurantSettings
 
 from . import metrics
-from .rendering import csv_response, money_as_strings
+from .rendering import csv_response, json_ready
 from .serializers import PeriodQuerySerializer
 
 
@@ -27,7 +27,7 @@ class DashboardStatsView(APIView):
 
     def get(self, request):
         restaurant, params = read_query(request)
-        return Response(money_as_strings(metrics.build_stats(restaurant, params["period"])))
+        return Response(json_ready(metrics.build_stats(restaurant, params["period"])))
 
 
 class ReportView(APIView):
@@ -53,7 +53,7 @@ class ReportView(APIView):
             filename = f"{self.name}-{period.start_day}-{period.end_day}.csv"
             return csv_response(filename, self.header, ([row[col] for col in self.header] for row in rows))
         return Response(
-            money_as_strings({"start": period.start_day, "end": period.end_day, "results": rows})
+            json_ready({"start": period.start_day, "end": period.end_day, "results": rows})
         )
 
 

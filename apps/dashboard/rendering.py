@@ -1,6 +1,7 @@
 """Turning metrics into HTTP bodies: money as strings, and safe CSV downloads."""
 
 import csv
+from datetime import date, datetime
 from decimal import Decimal
 
 from django.http import HttpResponse
@@ -9,14 +10,20 @@ FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 UTF8_BOM = "\ufeff"  # Lets Excel open accented text correctly.
 
 
-def money_as_strings(value):
-    """DRF would encode a bare Decimal as a float; money must stay an exact string."""
+def json_ready(value):
+    """Shape a payload exactly like its JSON form: money as exact strings, days as ISO dates.
+
+    DRF would encode a bare Decimal as a float, and `response.data` would still hold Python
+    dates; converting here makes the data and the wire format agree. Datetimes are left to
+    DRF's encoder, which already writes them as ISO 8601."""
     if isinstance(value, Decimal):
         return str(value)
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return value.isoformat()
     if isinstance(value, dict):
-        return {key: money_as_strings(item) for key, item in value.items()}
+        return {key: json_ready(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
-        return [money_as_strings(item) for item in value]
+        return [json_ready(item) for item in value]
     return value
 
 
