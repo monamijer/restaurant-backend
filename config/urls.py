@@ -34,6 +34,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("apps.accounts.urls")),
     path("api/settings/", RestaurantSettingsView.as_view(), name="restaurant-settings"),
+    path("api/", include("apps.dashboard.urls")),
     path("api/", include(router.urls)),
 ]
 
