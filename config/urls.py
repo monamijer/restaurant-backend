@@ -16,6 +16,7 @@ from apps.orders.views import OrderViewSet
 
 from apps.invoices.views import InvoiceViewSet
 from apps.payments.views import PaymentViewSet
+from apps.accounts.user_views import UserViewSet
 
 router = SimpleRouter()
 router.register("categories", CategoryViewSet, basename="category")
@@ -27,6 +28,7 @@ router.register("queue", QueueViewSet, basename="queue")
 router.register("orders", OrderViewSet, basename="order")
 router.register("payments", PaymentViewSet, basename="payment")
 router.register("invoices", InvoiceViewSet, basename="invoice")
+router.register("users", UserViewSet, basename="user")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
