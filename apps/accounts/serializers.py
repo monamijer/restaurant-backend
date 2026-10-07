@@ -4,6 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from . import password_reset
 
 from .models import User
 
@@ -146,4 +147,19 @@ class SetPasswordSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         check_password_strength(attrs["password"], self.context["target"])
+        return attrs
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=MAX_EMAIL_LENGTH)
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField(max_length=MAX_EMAIL_LENGTH)
+    token = serializers.CharField(max_length=MAX_EMAIL_LENGTH)
+    new_password = serializers.CharField(write_only=True, trim_whitespace=False)
+
+    def validate(self, attrs):
+        user = password_reset.resolve_user(attrs["uid"], attrs["token"])
+        check_password_strength(attrs["new_password"], user, field="new_password")
+        attrs["user"] = user
         return attrs
