@@ -1,4 +1,4 @@
-"""Serializers for registration, login and the current-user profile."""
+"""Serializers for authentication, the current-user profile and account management."""
 
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -6,6 +6,24 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import User
+
+MAX_EMAIL_LENGTH = 254
+MONEY_DIGITS = 12
+
+
+def check_password_strength(password, user, field="password"):
+    """Run Django's password validators against the candidate user; errors keyed by `field`."""
+    try:
+        validate_password(password, user=user)
+    except DjangoValidationError as error:
+        raise serializers.ValidationError({field: list(error.messages)})
+
+
+def unique_email(value):
+    email = User.objects.normalize_email(value)
+    if User.objects.filter(email__iexact=email).exists():
+        raise serializers.ValidationError("A user with this email already exists.")
+    return email
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -18,7 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(max_length=254)
+    email = serializers.EmailField(max_length=MAX_EMAIL_LENGTH)
     password = serializers.CharField(
         write_only=True, trim_whitespace=False, style={"input_type": "password"}
     )
@@ -28,21 +46,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ("email", "password", "first_name", "last_name", "phone", "address")
 
     def validate_email(self, value):
-        email = User.objects.normalize_email(value)
-        if User.objects.filter(email__iexact=email).exists():
-            raise serializers.ValidationError("A user with this email already exists.")
-        return email
+        return unique_email(value)
 
     def validate(self, attrs):
         candidate = User(
-            email=attrs["email"],
-            first_name=attrs["first_name"],
-            last_name=attrs["last_name"],
+            email=attrs["email"], first_name=attrs["first_name"], last_name=attrs["last_name"]
         )
-        try:
-            validate_password(attrs["password"], user=candidate)
-        except DjangoValidationError as error:
-            raise serializers.ValidationError({"password": list(error.messages)})
+        check_password_strength(attrs["password"], candidate)
         return attrs
 
     def create(self, validated_data):
@@ -60,3 +70,80 @@ class LoginSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data["user"] = UserSerializer(self.user).data
         return data
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    new_password = serializers.CharField(write_only=True, trim_whitespace=False)
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        if not user.check_password(attrs["old_password"]):
+            raise serializers.ValidationError({"old_password": ["The current password is incorrect."]})
+        check_password_strength(attrs["new_password"], user, field="new_password")
+        return attrs
+
+
+# --- Account management (staff and administrators) -------------------------------------
+class UserAdminSerializer(serializers.ModelSerializer):
+    """Read model for the account pages, with customer statistics added by the queryset."""
+
+    orders_count = serializers.IntegerField(read_only=True)
+    total_spent = serializers.DecimalField(max_digits=MONEY_DIGITS, decimal_places=2, read_only=True)
+    last_order_at = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "phone",
+            "address",
+            "role",
+            "is_active",
+            "last_login",
+            "created_at",
+            "orders_count",
+            "total_spent",
+            "last_order_at",
+        )
+        read_only_fields = fields
+
+
+class UserCreateSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(max_length=MAX_EMAIL_LENGTH)
+    password = serializers.CharField(
+        write_only=True, trim_whitespace=False, style={"input_type": "password"}
+    )
+
+    class Meta:
+        model = User
+        fields = ("email", "password", "first_name", "last_name", "phone", "address", "role")
+
+    def validate_email(self, value):
+        return unique_email(value)
+
+    def validate(self, attrs):
+        candidate = User(
+            email=attrs["email"], first_name=attrs["first_name"], last_name=attrs["last_name"]
+        )
+        check_password_strength(attrs["password"], candidate)
+        return attrs
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """Identity (email) and password are deliberately not editable here."""
+
+    class Meta:
+        model = User
+        fields = ("first_name", "last_name", "phone", "address", "role", "is_active")
+
+
+class SetPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+
+    def validate(self, attrs):
+        check_password_strength(attrs["password"], self.context["target"])
+        return attrs
