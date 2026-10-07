@@ -120,6 +120,25 @@ PAYMENT_GATEWAY = env("PAYMENT_GATEWAY", default="apps.payments.gateways.Simulat
 # The simulated gateway approves almost any token, so outside development it must be
 # switched on deliberately.
 ALLOW_SIMULATED_PAYMENTS = env.bool("ALLOW_SIMULATED_PAYMENTS", default=DEBUG)
+# --- Front-end links and e-mail --------------------------------------------
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173").rstrip("/")
+PASSWORD_RESET_TIMEOUT = env.int("PASSWORD_RESET_TIMEOUT_SECONDS", default=3600)
+
+EMAIL_BACKEND = env(
+    "EMAIL_BACKEND",
+    default=(
+        "django.core.mail.backends.console.EmailBackend"  # Printed in the server console.
+        if DEBUG
+        else "django.core.mail.backends.smtp.EmailBackend"
+    ),
+)
+EMAIL_HOST = env("EMAIL_HOST", default="localhost")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Restaurant <no-reply@localhost>")
+
 
 # --- CORS (the frontend runs as a separate app on its own origin) --------
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:5173"])
@@ -149,7 +168,8 @@ REST_FRAMEWORK = {
         "anon": "100/min",
         "user": "300/min",
         "auth": "10/min",  # register + login: brute-force protection
-        "payments": "20/min",  # card-testing protection on payment creation        
+        "payments": "20/min",  # card-testing protection on payment creation 
+        "password_reset": "5/hour",  # Stops e-mail flooding       
     },
     "EXCEPTION_HANDLER": "apps.core.exceptions.api_exception_handler",
 }
