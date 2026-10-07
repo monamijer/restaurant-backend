@@ -18,7 +18,9 @@ class Table(TimestampedModel):
         max_length=10, choices=TableStatus.choices, default=TableStatus.AVAILABLE
     )
     location = models.CharField(max_length=60, blank=True)
-    qr_code = models.ImageField(upload_to="tables/qr/", blank=True)
+    qr_version = models.PositiveSmallIntegerField(
+        default=1, help_text="Raising it invalidates every QR code already printed for this table."
+    )
 
     class Meta:
         ordering = ["number"]
