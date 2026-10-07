@@ -72,6 +72,7 @@ def wipe():
         for invoice in Invoice.objects.all():
             invoice.pdf_file.delete(save=False)
         Invoice.objects.all().delete()
+        Payment.objects.all().delete()  # Payments protect their order, so they go first.
         Order.objects.all().delete()  # Items are removed with their order.
         Reservation.objects.all().delete()
         QueueTicket.objects.all().delete()
@@ -80,7 +81,6 @@ def wipe():
         Category.objects.all().delete()
         Table.objects.all().delete()
         InvoiceSequence.objects.all().delete()
-        Payment.objects.all().delete()        
         demo_accounts().delete()
 
 
