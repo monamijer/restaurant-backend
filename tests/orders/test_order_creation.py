@@ -8,6 +8,8 @@ from apps.notifications.models import Notification
 from apps.orders.models import Order
 from apps.tables.models import TableStatus
 
+from apps.tables.qr import make_token
+
 URL = "/api/orders/"
 
 pytestmark = pytest.mark.django_db
@@ -159,8 +161,14 @@ class TestDishValidation:
 
 
 class TestOrderTypeRules:
-    def test_dine_in_needs_a_table(self, as_user, customer, order_payload):
+    def test_a_customer_dining_in_must_scan_a_table_code(self, as_user, customer, order_payload):
         response = as_user(customer).post(URL, order_payload(order_type="dine_in"), format="json")
+
+        assert response.status_code == 400
+        assert "table_token" in response.data["errors"]
+
+    def test_staff_dining_in_must_name_a_table(self, as_user, staff_user, order_payload):
+        response = as_user(staff_user).post(URL, order_payload(order_type="dine_in"), format="json")
 
         assert response.status_code == 400
         assert "table" in response.data["errors"]
@@ -190,16 +198,24 @@ class TestOrderTypeRules:
         assert response.data["delivery_address"] == "12 Main Street"
         assert response.data["contact_phone"] == "+25712345678"
 
-    def test_an_unknown_table_is_rejected(self, as_user, customer, order_payload):
-        payload = order_payload(order_type="dine_in", table=9999)
+    def test_an_unknown_table_code_is_rejected(self, as_user, customer, order_payload):
+        payload = order_payload(order_type="dine_in", table_token="made-up.token")
 
         response = as_user(customer).post(URL, payload, format="json")
+
+        assert response.status_code == 400
+        assert "table_token" in response.data["errors"]
+
+    def test_staff_naming_an_unknown_table_is_rejected(self, as_user, staff_user, order_payload):
+        payload = order_payload(order_type="dine_in", table=9999)
+
+        response = as_user(staff_user).post(URL, payload, format="json")
 
         assert response.status_code == 400
         assert "table" in response.data["errors"]
 
     def test_a_dine_in_order_opens_the_table(self, as_user, customer, table, order_payload):
-        payload = order_payload(order_type="dine_in", table=table.pk)
+        payload = order_payload(order_type="dine_in", table_token=make_token(table))
 
         response = as_user(customer).post(URL, payload, format="json")
 

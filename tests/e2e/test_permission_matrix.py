@@ -49,7 +49,7 @@ MATRIX = [
     ("get", "/api/notifications/", SIGNED_IN),
     ("get", "/api/notifications/unread-count/", SIGNED_IN),
     ("get", "/api/auth/me/", SIGNED_IN),
-        ("get", "/api/users/", STAFF),
+    ("get", "/api/users/", STAFF),
     ("post", "/api/users/", ADMIN),
     ("patch", f"/api/users/{MISSING}/", ADMIN),
     ("post", f"/api/users/{MISSING}/set-password/", ADMIN),
@@ -61,6 +61,12 @@ MATRIX = [
     ("get", "/api/reports/peak-hours/", ADMIN),
     ("get", "/api/reports/table-utilization/", ADMIN),
     ("get", "/api/reports/payments/", ADMIN),
+    ("post", "/api/auth/password-reset/", EVERYONE),
+    ("post", "/api/auth/password-reset/confirm/", EVERYONE),
+    ("post", "/api/tables/resolve-qr/", EVERYONE),
+    ("get", f"/api/tables/{MISSING}/qr-code/", ADMIN),
+    ("get", "/api/tables/qr-sheet/", ADMIN),
+    ("post", f"/api/tables/{MISSING}/regenerate-qr/", ADMIN),    
 ]
 
 

@@ -117,3 +117,26 @@ at most 366), plus `group_by=day|week|month`, `limit=1..50` (top items) and `exp
 | GET | `/reports/payments/?export=csv` | admin | Payment ledger, CSV only. |
 
 CSV files start with a UTF-8 BOM for Excel, and any cell starting with `= + - @` is prefixed with `'`.
+
+
+## Password reset
+
+| Method | Path | Who | Notes |
+|---|---|---|---|
+| POST | `/auth/password-reset/` | anyone | `{email}`. Always answers 200 with the same message; 5 per hour. The e-mail links to `FRONTEND_URL/reset-password?uid=...&token=...`, valid one hour, single use. |
+| POST | `/auth/password-reset/confirm/` | anyone | `{uid, token, new_password}`; 204. 400 with a `token` error for any bad link. Signs the user out everywhere. |
+
+## Table QR codes
+
+Each table has a QR code encoding `FRONTEND_URL/scan?t=<token>`. The frontend reads `t`, calls
+`resolve-qr`, then lets the customer order on site with `table_token` set to that same value.
+
+| Method | Path | Who | Notes |
+|---|---|---|---|
+| POST | `/tables/resolve-qr/` | anyone | `{token}` returns `{id, number, capacity, location}`; 400 if invalid or replaced. |
+| GET | `/tables/{id}/qr-code/` | admin | PNG, never cached. |
+| GET | `/tables/qr-sheet/` | admin | A4 PDF with six codes per page. |
+| POST | `/tables/{id}/regenerate-qr/` | admin | Invalidates every code already printed for the table. |
+
+**Ordering on site** (`POST /orders/` with `order_type: "dine_in"`): customers send `table_token`
+and may not send `table`; staff may send either. Tables no longer expose a `qr_code` field.

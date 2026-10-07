@@ -5,6 +5,8 @@ from django.utils import timezone
 
 from apps.tables.models import Table, TableStatus
 
+from apps.tables.qr import make_token
+
 pytestmark = pytest.mark.django_db
 
 CUSTOMER_EMAIL = "new.customer@example.com"
@@ -89,7 +91,7 @@ def test_a_customer_books_a_table_and_staff_decide(
     # The request holds the slot while it waits for staff.
     booked = customer.post(
         "/api/reservations/",
-        {"table": table.pk, "date": day, "time": "19:00", "duration_minutes": 90, "party_size": 2},
+        {"table_token": make_token(table), "date": day, "time": "19:00", "duration_minutes": 90, "party_size": 2},
         format="json",
     )
     assert booked.status_code == 201
