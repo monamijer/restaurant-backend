@@ -4,7 +4,6 @@ import pytest
 from django.utils import timezone
 
 from apps.tables.models import Table, TableStatus
-
 from apps.tables.qr import make_token
 
 pytestmark = pytest.mark.django_db
@@ -36,10 +35,16 @@ def test_a_new_customer_orders_pays_and_receives_an_invoice(
     menu = api_client.get("/api/menu-items/")
     assert [item["name"] for item in menu.data["results"]] == ["Grilled fish"]
 
-    # Ordering on site opens the table.
+    # Ordering on site: the customer proves presence by scanning the table's QR code.
+    scan = api_client.post("/api/tables/resolve-qr/", {"token": make_token(table)}, format="json")
+    assert scan.data["number"] == table.number
     order = customer.post(
         "/api/orders/",
-        {"order_type": "dine_in", "table": table.pk, "items": [{"menu_item": dish.pk, "quantity": 2}]},
+        {
+            "order_type": "dine_in",
+            "table_token": make_token(table),
+            "items": [{"menu_item": dish.pk, "quantity": 2}],
+        },
         format="json",
     )
     assert order.status_code == 201
@@ -55,7 +60,7 @@ def test_a_new_customer_orders_pays_and_receives_an_invoice(
     assert payment.status_code == 201
     assert payment.data["status"] == "paid"
 
-    # Staff run the order through the kitchen; the last step frees the table for cleaning.
+    # Staff run the order through the kitchen; the last step sends the table to cleaning.
     for new_status in ["confirmed", "preparing", "ready", "completed"]:
         step = staff_client.post(
             f"/api/orders/{order.data['id']}/update-status/", {"status": new_status}, format="json"
@@ -88,16 +93,18 @@ def test_a_customer_books_a_table_and_staff_decide(
     slots = customer.get("/api/reservations/availability/", query)
     assert "19:00" in [slot["time"] for slot in slots.data["slots"]]
 
-    # The request holds the slot while it waits for staff.
+    # A reservation names its table by id: only on-site ordering needs the QR code.
     booked = customer.post(
         "/api/reservations/",
-        {"table_token": make_token(table), "date": day, "time": "19:00", "duration_minutes": 90, "party_size": 2},
+        {"table": table.pk, "date": day, "time": "19:00", "duration_minutes": 90, "party_size": 2},
         format="json",
     )
     assert booked.status_code == 201
     assert booked.data["status"] == "pending"
-    other_slots = customer.get("/api/reservations/availability/", {**query, "party_size": 2})
-    assert "19:00" in [slot["time"] for slot in other_slots.data["slots"]]  # second table is free
+
+    # The pending request holds table 1 but the second table is still free at that time.
+    other_slots = customer.get("/api/reservations/availability/", query)
+    assert "19:00" in [slot["time"] for slot in other_slots.data["slots"]]
 
     # Staff see it, confirm it, and the customer is told.
     pending = staff_client.get("/api/reservations/", {"status": "pending"})
