@@ -142,14 +142,6 @@ if _mail_backend == _SMTP_BACKEND:
 MAILERS = {"default": {"BACKEND": _mail_backend, "OPTIONS": _mail_options}}
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Restaurant <no-reply@localhost>")
 
-EMAIL_HOST = env("EMAIL_HOST", default="localhost")
-EMAIL_PORT = env.int("EMAIL_PORT", default=587)
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Restaurant <no-reply@localhost>")
-
-
 # --- CORS (the frontend runs as a separate app on its own origin) --------
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:5173"])
 
