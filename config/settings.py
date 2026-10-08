@@ -124,14 +124,24 @@ ALLOW_SIMULATED_PAYMENTS = env.bool("ALLOW_SIMULATED_PAYMENTS", default=DEBUG)
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173").rstrip("/")
 PASSWORD_RESET_TIMEOUT = env.int("PASSWORD_RESET_TIMEOUT_SECONDS", default=3600)
 
-EMAIL_BACKEND = env(
-    "EMAIL_BACKEND",
-    default=(
-        "django.core.mail.backends.console.EmailBackend"  # Printed in the server console.
-        if DEBUG
-        else "django.core.mail.backends.smtp.EmailBackend"
-    ),
-)
+_SMTP_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+_CONSOLE_BACKEND = "django.core.mail.backends.console.EmailBackend"  # Prints in the server console.
+_mail_backend = env("EMAIL_BACKEND", default=_CONSOLE_BACKEND if DEBUG else _SMTP_BACKEND)
+
+# OPTIONS are handed to the backend as keyword arguments, so only the SMTP backend gets them.
+_mail_options = {}
+if _mail_backend == _SMTP_BACKEND:
+    _mail_options = {
+        "host": env("EMAIL_HOST", default="localhost"),
+        "port": env.int("EMAIL_PORT", default=587),
+        "username": env("EMAIL_HOST_USER", default=""),
+        "password": env("EMAIL_HOST_PASSWORD", default=""),
+        "use_tls": env.bool("EMAIL_USE_TLS", default=True),
+    }
+
+MAILERS = {"default": {"BACKEND": _mail_backend, "OPTIONS": _mail_options}}
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Restaurant <no-reply@localhost>")
+
 EMAIL_HOST = env("EMAIL_HOST", default="localhost")
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
